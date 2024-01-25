@@ -16,76 +16,123 @@
         private bool _firstMove = true;
         private Vector2 _lastPos;
 
-        private readonly Vector3 _lightPos = new Vector3(1.2f, 1.0f, 2.0f);
+        private readonly Vector3 _lightPos = new Vector3(1.0f, 1.0f, 2.0f);
         private int _vertexBufferObject;
 
         private int _vaoModel;
         private int _vaoLamp;
         private Shader _lampShader;
         private Shader _lightingShader;
+
         private Texture _diffuseMap;
         private Texture _specularMap;
 
-        public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
+        public Game(
+            GameWindowSettings gameWindowSettings,
+            NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
         {
         }
 
         protected override void OnLoad()
         {
-            base.OnLoad();
-
             GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             GL.Enable(EnableCap.DepthTest);
 
-            //_planet = new Planet(0.5f, 512, 512);
             _sphere = new Sphere(0.5f, 500, 500);
-            _shader = new Shader(
-                "../../../Shaders/shader.vert",
-                "../../../Shaders/shader.frag");
-            _shader.Use();
-            
-            {            
-                var vertexLocation = _shader.GetAttribLocation("aPosition");
+            //_shader = new Shader(
+            //    "../../../Shaders/shader.vert",
+            //    "../../../Shaders/shader.frag");
+            //_shader.Use();
+
+            _lightingShader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/lighting.frag");
+            _lampShader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/shader.frag");
+
+            {
+                // Initialize the vao for the model
+                //_vaoModel = GL.GenVertexArray();
+                //GL.BindVertexArray(_vaoModel);
+
+                var vertexLocation = _lightingShader.GetAttribLocation("aPos");
                 GL.EnableVertexAttribArray(vertexLocation);
-                GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);                
-            
-                var texCoordLocation = _shader.GetAttribLocation("aTexCoord");
-                GL.EnableVertexAttribArray(texCoordLocation);
-                GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+                GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
             }
+
+            {
+                // Initialize the vao for the lamp, this is mostly the same as the code for the model cube
+                _vaoLamp = GL.GenVertexArray();
+                GL.BindVertexArray(_vaoLamp);
+
+                // Set the vertex attributes (only position data for our lamp)
+                var vertexLocation = _lampShader.GetAttribLocation("aPos");
+                GL.EnableVertexAttribArray(vertexLocation);
+                GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            }
+
+            //{            
+            //    var vertexLocation = _shader.GetAttribLocation("aPosition");
+            //    GL.EnableVertexAttribArray(vertexLocation);
+            //    GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);                
+            //
+            //    var texCoordLocation = _shader.GetAttribLocation("aTexCoord");
+            //    GL.EnableVertexAttribArray(texCoordLocation);
+            //    GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+            //}
 
             _camera = new Camera(Vector3.UnitZ * 3, Size.X / (float)Size.Y);
             CursorState = CursorState.Grabbed;
+
+            base.OnLoad();
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
-        {
-            base.OnRenderFrame(e);
+        {            
             _time += 4.0 * e.Time;
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
            
-            _sphere.SetLight(new Vector3(1.0f, 1.0f, 1.0f), new Vector3(1.0f, 1.0f, 1.0f));
-            var model = Matrix4.Identity;
-            model *= Matrix4.CreateRotationX((float)MathHelper.DegreesToRadians(_time));
-            model *= Matrix4.CreateRotationY((float)MathHelper.DegreesToRadians(_time));
-            model *= Matrix4.CreateRotationZ((float)MathHelper.DegreesToRadians(_time));
+            //_sphere.SetLight(new Vector3(1.0f, 1.0f, 1.0f), new Vector3(1.0f, 1.0f, 1.0f));
+            //var model = Matrix4.Identity;
+            //model *= Matrix4.CreateRotationX((float)MathHelper.DegreesToRadians(_time));
+            ////model *= Matrix4.CreateRotationY((float)MathHelper.DegreesToRadians(_time));
+            ////model *= Matrix4.CreateRotationZ((float)MathHelper.DegreesToRadians(_time));
+            //
+            //_shader.Use();
+            //_shader.SetMatrix4("model", model);
+            //_shader.SetMatrix4("view", _camera.GetViewMatrix());
+            //_shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
 
-            _shader.Use();
-            _shader.SetMatrix4("model", model);
-            _shader.SetMatrix4("view", _camera.GetViewMatrix());
-            _shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
+            _lightingShader.Use();
+
+            _lightingShader.SetMatrix4("model", Matrix4.Identity);
+            _lightingShader.SetMatrix4("view", _camera.GetViewMatrix());
+            _lightingShader.SetMatrix4("projection", _camera.GetProjectionMatrix());
+
+            _lightingShader.SetVector3("objectColor", new Vector3(1.0f, 0.5f, 0.6f));
+            _lightingShader.SetVector3("lightColor", new Vector3(1.0f, 1.0f, 1.0f));
 
             // Отрисовка сферы
             _sphere.Render();
 
+            GL.BindVertexArray(_vaoLamp);
+
+            _lampShader.Use();
+
+            Matrix4 lampMatrix = Matrix4.CreateScale(0.3f); // We scale the lamp cube down a bit to make it less dominant
+            lampMatrix = lampMatrix * Matrix4.CreateTranslation(_lightPos);
+
+            _lampShader.SetMatrix4("model", lampMatrix);
+            _lampShader.SetMatrix4("view", _camera.GetViewMatrix());
+            _lampShader.SetMatrix4("projection", _camera.GetProjectionMatrix());
+
+            _sphere.Render();
+
             SwapBuffers();
+
+            base.OnRenderFrame(e);
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            base.OnUpdateFrame(e);
-
             if (!IsFocused)
             {
                 return;
@@ -143,13 +190,16 @@
                 _camera.Yaw += deltaX * sensitivity;
                 _camera.Pitch -= deltaY * sensitivity;
             }
+
+            base.OnUpdateFrame(e);
         }
 
         protected override void OnResize(ResizeEventArgs e)
-        {
-            base.OnResize(e);
+        {            
             GL.Viewport(0, 0, Size.X, Size.Y);
             _camera.AspectRatio = Size.X / (float)Size.Y;
+
+            base.OnResize(e);
         }
 
         protected override void OnUnload()
@@ -164,10 +214,10 @@
         }
 
         protected override void OnMouseWheel(MouseWheelEventArgs e)
-        {
-            base.OnMouseWheel(e);
-
+        {            
             _camera.Fov -= e.OffsetY;
+
+            base.OnMouseWheel(e);
         }
     }
 }

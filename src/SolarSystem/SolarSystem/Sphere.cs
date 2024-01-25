@@ -47,8 +47,8 @@
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBufferHandle);
             GL.BindVertexArray(0);                        
             
-            textureHandle = LoadTexture("../../../Resources/earth8k.jpg");
-            textureSpecularHandle = LoadTexture("../../../Resources/earth8k_specular.jpg");
+            //textureHandle = LoadTexture("../../../Resources/earth8k.jpg");
+            //textureSpecularHandle = LoadTexture("../../../Resources/earth8k_specular.jpg");
         }
 
         public void SetLight(Vector3 position, Vector3 color)
@@ -146,10 +146,10 @@
         public void Render()
         {
             GL.BindVertexArray(vaoHandle);
-            GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.Texture2D, textureHandle);
-            GL.ActiveTexture(TextureUnit.Texture1);
-            GL.BindTexture(TextureTarget.Texture2D, textureSpecularHandle);
+            //GL.ActiveTexture(TextureUnit.Texture0);
+            //GL.BindTexture(TextureTarget.Texture2D, textureHandle);
+            //GL.ActiveTexture(TextureUnit.Texture1);
+            //GL.BindTexture(TextureTarget.Texture2D, textureSpecularHandle);
             GL.DrawElements(BeginMode.Triangles, indexCount, DrawElementsType.UnsignedInt, 0);
             GL.BindVertexArray(0);
         }
