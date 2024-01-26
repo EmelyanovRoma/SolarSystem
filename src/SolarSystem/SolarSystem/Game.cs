@@ -1,22 +1,20 @@
-﻿namespace SolarSystemTest
+﻿namespace SolarSystem
 {
     using OpenTK.Graphics.OpenGL4;
     using OpenTK.Mathematics;
     using OpenTK.Windowing.Common;
     using OpenTK.Windowing.GraphicsLibraryFramework;
     using OpenTK.Windowing.Desktop;
-    using SolarSystem;
 
     public class Game : GameWindow
     {
         private double _time;
 
-        // Шейдеры освещения
         private Shader _lampShader;
         private Shader _lightingShader;
 
         private Sphere _sun;
-        private Dictionary<PlanetType, Sphere> _solarSystemPlanets;
+        private Dictionary<PlanetType, SpaceObject> _solarSystemPlanets;
 
         private Camera _camera;
         private bool _firstMove = true;
@@ -34,46 +32,46 @@
             GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             GL.Enable(EnableCap.DepthTest);
 
-            _lightingShader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/lighting.frag");
-            _lampShader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/shader.frag");
+            _lightingShader = new Shader("Shaders/shader.vert", "Shaders/lighting.frag");
+            _lampShader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
 
             _camera = new Camera(Vector3.UnitZ * 30, Size.X / (float)Size.Y);
             CursorState = CursorState.Grabbed;
 
-            _sun = new Sphere(15.0f, 500, 500, 0.0f, 0.0f, "../../../Resources/sun_texture.jpg");
-            _solarSystemPlanets = new Dictionary<PlanetType, Sphere>()
+            _sun = new Sphere(15.0f, 50, 50);
+            _solarSystemPlanets = new Dictionary<PlanetType, SpaceObject>()
             {
                 {
                     PlanetType.Mercury,
-                    new Sphere(0.34f, 100, 100, 47.36f, 20.0f, "../../../Resources/mercury_texture.jpg")
+                    new SpaceObject(0.34f, 100, 100, 47.36f, 20.0f, "Resources/mercury_texture.jpg")
                 },
                 {
                     PlanetType.Venus,
-                    new Sphere(0.85f, 250, 250, 35.02f, 24.0f, "../../../Resources/venus_texture.jpg")
+                    new SpaceObject(0.85f, 250, 250, 35.02f, 24.0f, "Resources/venus_texture.jpg")
                 },
                 {
                     PlanetType.Earth,
-                    new Sphere(0.91f, 250, 250, 29.78f, 29.0f, "../../../Resources/earth_texture.jpg")
+                    new SpaceObject(0.91f, 250, 250, 29.78f, 29.0f, "Resources/earth_texture.jpg")
                 },
                 {
                     PlanetType.Mars,
-                    new Sphere(0.49f, 125, 125, 24.13f, 33.0f, "../../../Resources/mars_texture.jpg")
+                    new SpaceObject(0.49f, 125, 125, 24.13f, 33.0f, "Resources/mars_texture.jpg")
                 },
                 {
                     PlanetType.Jupiter,
-                    new Sphere(2.0f, 500, 500, 13.07f, 45.0f, "../../../Resources/jupiter_texture.jpg")
+                    new SpaceObject(2.0f, 500, 500, 13.07f, 45.0f, "Resources/jupiter_texture.jpg")
                 },
                 {
                     PlanetType.Saturn,
-                    new Sphere(1.66f, 450, 450, 9.69f, 58.0f, "../../../Resources/saturn_texture.jpg")
+                    new SpaceObject(1.66f, 450, 450, 9.69f, 58.0f, "Resources/saturn_texture.jpg")
                 },
                 {
                     PlanetType.Uranus,
-                    new Sphere(1.42f, 350, 350, 6.81f, 71.0f, "../../../Resources/uranus_texture.jpg")
+                    new SpaceObject(1.42f, 350, 350, 6.81f, 71.0f, "Resources/uranus_texture.jpg")
                 },
                 {
                     PlanetType.Neptune,
-                    new Sphere(1.38f, 350, 350, 5.43f, 80.0f, "../../../Resources/neptune_texture.jpg")
+                    new SpaceObject(1.38f, 350, 350, 5.43f, 80.0f, "Resources/neptune_texture.jpg")
                 },
             };
 

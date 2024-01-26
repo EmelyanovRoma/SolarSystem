@@ -1,4 +1,4 @@
-﻿namespace SolarSystemTest
+﻿namespace SolarSystem
 {
     using OpenTK.Mathematics;
         

@@ -1,9 +1,8 @@
-﻿namespace SolarSystemTest
+﻿namespace SolarSystem
 {
     using OpenTK.Mathematics;
     using OpenTK.Windowing.Common;
     using OpenTK.Windowing.Desktop;
-    using System.Windows.Forms;
 
     public static class Program
     {

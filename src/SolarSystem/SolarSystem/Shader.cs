@@ -1,4 +1,4 @@
-﻿namespace SolarSystemTest
+﻿namespace SolarSystem
 {
     using OpenTK.Graphics.OpenGL4;
     using OpenTK.Mathematics;
@@ -32,7 +32,8 @@
             GL.DeleteShader(fragmentShader);
             GL.DeleteShader(vertexShader);
 
-            GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
+            GL.GetProgram(
+                Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
 
             _uniformLocations = new Dictionary<string, int>();
 
@@ -53,7 +54,8 @@
             if (code != (int)All.True)
             {
                 var infoLog = GL.GetShaderInfoLog(shader);
-                throw new Exception($"Error occurred whilst compiling Shader({shader}).\n\n{infoLog}");
+                throw new Exception(
+                    $"Error occurred whilst compiling Shader({shader}).\n\n{infoLog}");
             }
         }
 
@@ -64,7 +66,8 @@
             GL.GetProgram(program, GetProgramParameterName.LinkStatus, out var code);
             if (code != (int)All.True)
             {
-                throw new Exception($"Error occurred whilst linking Program({program})");
+                throw new Exception(
+                    $"Error occurred whilst linking Program({program})");
             }
         }
 
@@ -78,49 +81,24 @@
             return GL.GetAttribLocation(Handle, attribName);
         }
 
-        /// <summary>
-        /// Set a uniform int on this shader.
-        /// </summary>
-        /// <param name="name">The name of the uniform</param>
-        /// <param name="data">The data to set</param>
         public void SetInt(string name, int data)
         {
             GL.UseProgram(Handle);
             GL.Uniform1(_uniformLocations[name], data);
         }
 
-        /// <summary>
-        /// Set a uniform float on this shader.
-        /// </summary>
-        /// <param name="name">The name of the uniform</param>
-        /// <param name="data">The data to set</param>
         public void SetFloat(string name, float data)
         {
             GL.UseProgram(Handle);
             GL.Uniform1(_uniformLocations[name], data);
         }
 
-        /// <summary>
-        /// Set a uniform Matrix4 on this shader
-        /// </summary>
-        /// <param name="name">The name of the uniform</param>
-        /// <param name="data">The data to set</param>
-        /// <remarks>
-        ///   <para>
-        ///   The matrix is transposed before being sent to the shader.
-        ///   </para>
-        /// </remarks>
         public void SetMatrix4(string name, Matrix4 data)
         {
             GL.UseProgram(Handle);
             GL.UniformMatrix4(_uniformLocations[name], true, ref data);
         }
 
-        /// <summary>
-        /// Set a uniform Vector3 on this shader.
-        /// </summary>
-        /// <param name="name">The name of the uniform</param>
-        /// <param name="data">The data to set</param>
         public void SetVector3(string name, Vector3 data)
         {
             GL.UseProgram(Handle);
