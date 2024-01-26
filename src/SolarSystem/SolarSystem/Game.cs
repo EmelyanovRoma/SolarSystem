@@ -5,27 +5,22 @@
     using OpenTK.Windowing.Common;
     using OpenTK.Windowing.GraphicsLibraryFramework;
     using OpenTK.Windowing.Desktop;
+    using SolarSystem;
 
     public class Game : GameWindow
     {
-        private Shader _shader;
-        private Sphere _sphere;
         private double _time;
+
+        // Шейдеры освещения
+        private Shader _lampShader;
+        private Shader _lightingShader;
+
+        private Sphere _sun;
+        private Dictionary<PlanetType, Sphere> _solarSystemPlanets;
 
         private Camera _camera;
         private bool _firstMove = true;
         private Vector2 _lastPos;
-
-        private readonly Vector3 _lightPos = new Vector3(1.0f, 1.0f, 2.0f);
-        private int _vertexBufferObject;
-
-        private int _vaoModel;
-        private int _vaoLamp;
-        private Shader _lampShader;
-        private Shader _lightingShader;
-
-        private Texture _diffuseMap;
-        private Texture _specularMap;
 
         public Game(
             GameWindowSettings gameWindowSettings,
@@ -39,92 +34,78 @@
             GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             GL.Enable(EnableCap.DepthTest);
 
-            _sphere = new Sphere(0.5f, 500, 500);
-            //_shader = new Shader(
-            //    "../../../Shaders/shader.vert",
-            //    "../../../Shaders/shader.frag");
-            //_shader.Use();
-
             _lightingShader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/lighting.frag");
             _lampShader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/shader.frag");
 
-            {
-                // Initialize the vao for the model
-                //_vaoModel = GL.GenVertexArray();
-                //GL.BindVertexArray(_vaoModel);
-
-                var vertexLocation = _lightingShader.GetAttribLocation("aPos");
-                GL.EnableVertexAttribArray(vertexLocation);
-                GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-            }
-
-            {
-                // Initialize the vao for the lamp, this is mostly the same as the code for the model cube
-                _vaoLamp = GL.GenVertexArray();
-                GL.BindVertexArray(_vaoLamp);
-
-                // Set the vertex attributes (only position data for our lamp)
-                var vertexLocation = _lampShader.GetAttribLocation("aPos");
-                GL.EnableVertexAttribArray(vertexLocation);
-                GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-            }
-
-            //{            
-            //    var vertexLocation = _shader.GetAttribLocation("aPosition");
-            //    GL.EnableVertexAttribArray(vertexLocation);
-            //    GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);                
-            //
-            //    var texCoordLocation = _shader.GetAttribLocation("aTexCoord");
-            //    GL.EnableVertexAttribArray(texCoordLocation);
-            //    GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
-            //}
-
-            _camera = new Camera(Vector3.UnitZ * 3, Size.X / (float)Size.Y);
+            _camera = new Camera(Vector3.UnitZ * 30, Size.X / (float)Size.Y);
             CursorState = CursorState.Grabbed;
+
+            _sun = new Sphere(15.0f, 500, 500, 0.0f, 0.0f, "../../../Resources/sun_texture.jpg");
+            _solarSystemPlanets = new Dictionary<PlanetType, Sphere>()
+            {
+                {
+                    PlanetType.Mercury,
+                    new Sphere(0.34f, 100, 100, 47.36f, 20.0f, "../../../Resources/mercury_texture.jpg")
+                },
+                {
+                    PlanetType.Venus,
+                    new Sphere(0.85f, 250, 250, 35.02f, 24.0f, "../../../Resources/venus_texture.jpg")
+                },
+                {
+                    PlanetType.Earth,
+                    new Sphere(0.91f, 250, 250, 29.78f, 29.0f, "../../../Resources/earth_texture.jpg")
+                },
+                {
+                    PlanetType.Mars,
+                    new Sphere(0.49f, 125, 125, 24.13f, 33.0f, "../../../Resources/mars_texture.jpg")
+                },
+                {
+                    PlanetType.Jupiter,
+                    new Sphere(2.0f, 500, 500, 13.07f, 45.0f, "../../../Resources/jupiter_texture.jpg")
+                },
+                {
+                    PlanetType.Saturn,
+                    new Sphere(1.66f, 450, 450, 9.69f, 58.0f, "../../../Resources/saturn_texture.jpg")
+                },
+                {
+                    PlanetType.Uranus,
+                    new Sphere(1.42f, 350, 350, 6.81f, 71.0f, "../../../Resources/uranus_texture.jpg")
+                },
+                {
+                    PlanetType.Neptune,
+                    new Sphere(1.38f, 350, 350, 5.43f, 80.0f, "../../../Resources/neptune_texture.jpg")
+                },
+            };
 
             base.OnLoad();
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
-        {            
-            _time += 4.0 * e.Time;
+        {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-           
-            //_sphere.SetLight(new Vector3(1.0f, 1.0f, 1.0f), new Vector3(1.0f, 1.0f, 1.0f));
-            //var model = Matrix4.Identity;
-            //model *= Matrix4.CreateRotationX((float)MathHelper.DegreesToRadians(_time));
-            ////model *= Matrix4.CreateRotationY((float)MathHelper.DegreesToRadians(_time));
-            ////model *= Matrix4.CreateRotationZ((float)MathHelper.DegreesToRadians(_time));
-            //
-            //_shader.Use();
-            //_shader.SetMatrix4("model", model);
-            //_shader.SetMatrix4("view", _camera.GetViewMatrix());
-            //_shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
+            LightingShaderSetup();
 
-            _lightingShader.Use();
+            _time += 0.5 * e.Time;
 
-            _lightingShader.SetMatrix4("model", Matrix4.Identity);
-            _lightingShader.SetMatrix4("view", _camera.GetViewMatrix());
-            _lightingShader.SetMatrix4("projection", _camera.GetProjectionMatrix());
+            // Рендер планет
+            foreach (var planet in _solarSystemPlanets)
+            {
+                var spaceObjectOrbitMatrix = Matrix4.CreateRotationY(
+                    (float)MathHelper.DegreesToRadians(
+                        _time * planet.Value.OrbitVelocity));
 
-            _lightingShader.SetVector3("objectColor", new Vector3(1.0f, 0.5f, 0.6f));
-            _lightingShader.SetVector3("lightColor", new Vector3(1.0f, 1.0f, 1.0f));
+                var spaceObjectModel = Matrix4.Identity *
+                    Matrix4.CreateTranslation(Vector3.UnitX * planet.Value.Offset);
 
-            // Отрисовка сферы
-            _sphere.Render();
+                spaceObjectModel *= spaceObjectOrbitMatrix;
 
-            GL.BindVertexArray(_vaoLamp);
+                _lightingShader.SetMatrix4("model", spaceObjectModel);
+                planet.Value.Render();
+            }
 
-            _lampShader.Use();
-
-            Matrix4 lampMatrix = Matrix4.CreateScale(0.3f); // We scale the lamp cube down a bit to make it less dominant
-            lampMatrix = lampMatrix * Matrix4.CreateTranslation(_lightPos);
-
-            _lampShader.SetMatrix4("model", lampMatrix);
-            _lampShader.SetMatrix4("view", _camera.GetViewMatrix());
-            _lampShader.SetMatrix4("projection", _camera.GetProjectionMatrix());
-
-            _sphere.Render();
+            // Рендер Солнца
+            LampShaderSetup();            
+            _sun.Render();
 
             SwapBuffers();
 
@@ -145,14 +126,13 @@
                 Close();
             }
 
-            const float cameraSpeed = 1.5f;
+            const float cameraSpeed = 15.0f;
             const float sensitivity = 0.2f;
 
             if (input.IsKeyDown(Keys.W))
             {
                 _camera.Position += _camera.Front * cameraSpeed * (float)e.Time;
             }
-
             if (input.IsKeyDown(Keys.S))
             {
                 _camera.Position -= _camera.Front * cameraSpeed * (float)e.Time;
@@ -202,22 +182,38 @@
             base.OnResize(e);
         }
 
-        protected override void OnUnload()
-        {
-            //GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            //GL.BindVertexArray(0);
-            //GL.UseProgram(0);
-            //
-            //GL.DeleteProgram(_shader.Handle);
-
-            base.OnUnload();
-        }
-
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {            
             _camera.Fov -= e.OffsetY;
 
             base.OnMouseWheel(e);
+        }
+
+        private void LightingShaderSetup()
+        {
+            _lightingShader.Use();
+            _lightingShader.SetMatrix4("model", Matrix4.Identity);
+            _lightingShader.SetMatrix4("view", _camera.GetViewMatrix());
+            _lightingShader.SetMatrix4("projection", _camera.GetProjectionMatrix());
+
+            _lightingShader.SetVector3("viewPos", _camera.Position);
+            _lightingShader.SetInt("material.diffuse", 0);
+            _lightingShader.SetInt("material.specular", 1);
+            _lightingShader.SetVector3("material.specular", new Vector3(0.5f));
+            _lightingShader.SetFloat("material.shininess", 30.0f);
+
+            _lightingShader.SetVector3("light.position", new Vector3(0.0f));
+            _lightingShader.SetVector3("light.ambient", new Vector3(0.2f));
+            _lightingShader.SetVector3("light.diffuse", new Vector3(0.7f));
+            _lightingShader.SetVector3("light.specular", new Vector3(1.0f));
+        }
+
+        private void LampShaderSetup()
+        {
+            _lampShader.Use();
+            _lampShader.SetMatrix4("model", Matrix4.Identity);
+            _lampShader.SetMatrix4("view", _camera.GetViewMatrix());
+            _lampShader.SetMatrix4("projection", _camera.GetProjectionMatrix());
         }
     }
 }

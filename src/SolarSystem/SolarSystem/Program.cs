@@ -9,14 +9,11 @@
     {
         private static void Main()
         {
-            int screenWidth = Screen.PrimaryScreen.Bounds.Width;
-
             var nativeWindowSettings = new NativeWindowSettings()
             {
-                ClientSize = new Vector2i(1024, 1024),
+                ClientSize = new Vector2i(1920, 1080),
                 Title = "Solar System",
                 Flags = ContextFlags.ForwardCompatible,
-                Location = new Vector2i((screenWidth / 2) - 512, 0)
             };
 
             using (var game = new Game(
